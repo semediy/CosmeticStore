@@ -1,0 +1,7 @@
+﻿services:
+  cosmeticsstore:
+    image: cosmeticsstore
+    build:
+      context: .
+      dockerfile: Dockerfile
+
