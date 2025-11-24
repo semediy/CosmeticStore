@@ -2,15 +2,209 @@
 
 class Program
 {
-    public static void Main(string[] args)
+    struct Product
     {
-        RenderIntro();
-
-        while (true)
+        public string Name;
+        public double Price;
+        public int QuantityInStock;  
+        public bool Avaliability; 
+    }
+    static string futureProductsFile = "futureTovar_.txt";
+    
+    static void SaveFutureProductsToFile()
+    {
+        using (StreamWriter writer = new StreamWriter(futureProductsFile))
         {
-            ShowMainMenu();
+            foreach (var p in products)
+            {
+                if (p.Avaliability == false)  // зберігаємо тільки ті, яких ще нема в наявності
+                {
+                    writer.WriteLine($"{p.Name}|{p.Price}|{p.QuantityInStock}|{p.Avaliability}");
+                }
+            }
         }
     }
+
+    static void LoadFutureProductsFromFile()
+    {
+        products.Clear();
+
+        if (!File.Exists(futureProductsFile))
+            return;
+
+        string[] lines = File.ReadAllLines(futureProductsFile);
+
+        foreach (string line in lines)
+        {
+            string[] parts = line.Split('|');
+
+            if (parts.Length == 4)
+            {
+                Product p = new Product();
+                p.Name = parts[0];
+                p.Price = double.Parse(parts[1]);
+                p.QuantityInStock = int.Parse(parts[2]);
+                p.Avaliability = bool.Parse(parts[3]);
+
+                products.Add(p);
+            }
+        }
+    }
+
+    static List<Product> products = new List<Product>();
+
+    static bool GetBool(string prompt)
+    {
+        while (true)
+        {
+            Console.ForegroundColor = ConsoleColor.Magenta;
+            Console.Write(prompt + " ");
+            Console.ResetColor();
+
+            string input = Console.ReadLine().Trim();
+
+            if (input == "1") return true;
+            if (input == "0") return false;
+
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("Помилка: введіть 1 (так) або 0 (ні)!");
+            Console.ResetColor();
+        }
+    }
+
+    static void AddProducts()
+    {
+        Console.WriteLine("\n=== Додавання товарів ===");
+
+        for (int i = 0; i < 5; i++)
+        {
+            Product p = new Product();
+
+            Console.WriteLine($"\nВведення товару №{i + 1}");
+
+            Console.Write("Назва товару: ");
+            p.Name = Console.ReadLine();
+
+          
+           p.Price = Shownumber("Ціна товару:");
+            
+            p.QuantityInStock = Shownumber("Кількість товару на складі (шт):");
+
+            p.Avaliability = GetBool("Товар в наявності? (1 - так, 0 - ні):");
+
+            products.Add(p);
+        }
+        SaveFutureProductsToFile();
+        Console.WriteLine("\nУспішно додано 5 товарів!");
+    }
+
+
+    static void ShowAllProducts()
+    { ShowProductMenu(); 
+        Console.WriteLine("\n=== Список товарів ===");
+
+        if (products.Count == 0)
+        {
+            Console.WriteLine("Немає збережених товарів.");
+            return;
+        }
+
+        int index = 1;
+        foreach (var p in products)
+        {
+            Console.WriteLine($"{index}. {p.Name} ціна: {p.Price} грн, кількість на складі {p.QuantityInStock},чи є в наявності в магазині: {p.Avaliability} ");
+            index++;
+        }
+      
+    }
+
+    public static void Main(string[] args)
+    {
+        LoadFutureProductsFromFile(); 
+        RenderIntro();
+        bool working = true;
+
+        while (working)
+        {
+            working = ShowMainMenu();
+        }
+    }
+
+
+    static void Admin()
+    {
+        Console.Write("Введiть логiн: ");
+        string login = Console.ReadLine().Trim();
+
+        if (login != "Yulia")
+        {
+            Console.WriteLine("Невiрний логiн. Доступ заборонено.");
+            ShowMainMenu();
+            return;
+        }
+
+        const string adminPassword = "Semediy";
+        int attempts = 3;
+
+        while (attempts > 0)
+        {
+            Console.Write("Введiть пароль: ");
+            string inputPassword = Console.ReadLine();
+
+            if (inputPassword == adminPassword)
+            {
+                Console.WriteLine("\nДоступ дозволено! Вiтаю, адмiнiстраторе.");
+                ShowAdminMenu();
+                return;
+            }
+
+            attempts--;
+
+            if (attempts > 0)
+            {
+                Console.WriteLine($"Неправильний пароль. Залишилось спроб: {attempts}");
+            }
+            else
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Доступ заблоковано. Програму завершено.");
+                Console.ResetColor();
+                Environment.Exit(0);
+            }
+        }
+    }
+
+
+    static void ShowAdminMenu()
+    {
+        while (true)
+        {
+            Console.WriteLine("\n====== АДМIНІСТРАТОРСЬКЕ МЕНЮ ======");
+            Console.WriteLine("1. Меню товарiв");
+            Console.WriteLine("2. Клiєнти");
+            Console.WriteLine("3. Повернутись у головне меню");
+            Console.WriteLine("=============================");
+
+            int choice = (int)GetUserInput("Оберiть пункт:");
+
+            switch (choice)
+            {
+                case 1:
+                    ShowMenuTov();
+                    break;
+                case 2:
+                    ShowClientsMenu();
+                    break;
+                case 3:
+                    ShowMainMenu();
+                    break;
+                default:
+                    Console.WriteLine("Невiрний вибiр. Спробуйте ще раз.");
+                    break;
+            }
+        }
+    }
+
 
     public static void Return()
     {
@@ -27,8 +221,8 @@ class Program
         Console.ResetColor();
     }
 
-    
-        
+
+
     public static int Shownumber(string prompt = "Введiть кiлькiсть:")
     {
         int number = 0;
@@ -41,10 +235,8 @@ class Program
                 Console.ForegroundColor = ConsoleColor.Magenta;
                 Console.WriteLine(prompt + " ");
                 Console.ResetColor();
-
-                string input = Console.ReadLine();
-
-                number = int.Parse(input);
+                
+                number = Convert.ToInt32(Console.ReadLine());
 
                 if (number < 0)
                 {
@@ -54,7 +246,7 @@ class Program
                     continue;
                 }
 
-                validInput = true; 
+                validInput = true;
             }
             catch (FormatException)
             {
@@ -101,21 +293,16 @@ class Program
     }
 
 
-    public static void ShowMainMenu()
+    public static bool ShowMainMenu()
     {
         Console.WriteLine();
-        Console.ForegroundColor = ConsoleColor.Black;
-        Console.WriteLine("Головне меню:");
+        Console.WriteLine("===== ГОЛОВНЕ МЕНЮ =====");
         Console.WriteLine("1. Каталог товарiв");
         Console.WriteLine("2. Оформити замовлення");
-        Console.WriteLine("3. Клiєнти");
-        Console.WriteLine("4. Меню товарiв");
-        Console.WriteLine("5. Статистика");
-        Console.WriteLine("6. Вихiд");
-        Console.ResetColor();
-        Console.WriteLine("\n");
+        Console.WriteLine("3. Вхід для адміністратора");
+        Console.WriteLine("4. Вихiд");
         Console.WriteLine();
-        
+
         int choice = (int)GetUserInput("Виберiть пункт меню:");
 
         switch (choice)
@@ -123,38 +310,29 @@ class Program
             case 1:
                 ShowProductMenu();
                 Return();
-                break;
+                return true;
+
             case 2:
                 ShowOrderMenu();
                 Return();
-                break;
+                return true;
+
             case 3:
-                ShowClientsMenu();
+                Admin();
                 Return();
-                break;
+                return true;
+
             case 4:
-                ShowMenuTov();
-                Return();
-                break;
-            case 5:
-                ShowStatisticsMenu();
-                Return();
-                break;
-            case 6:
                 Console.WriteLine("Бувайте! Гарного дня!");
-                Environment.Exit(0);
-                break;
+                return false;
             default:
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Неправильний вибiр");
-                Console.WriteLine("==================");
-                Console.WriteLine("Спробуйте ще раз");
-                break;
-                Console.ResetColor();
+                Console.WriteLine("Неправильний вибiр, спробуйте ще раз.");
+                return true;
         }
     }
 
-    private static void ShowProductMenu()
+
+    static void ShowProductMenu()
     {
 
         double priceLipstick = 310;
@@ -167,7 +345,7 @@ class Program
 
 
         Console.ForegroundColor = ConsoleColor.DarkRed;
-        Console.WriteLine("Каталог товарiв: ");
+        Console.WriteLine("Каталог товарiв:");
         Console.ResetColor();
         Console.ForegroundColor = ConsoleColor.Magenta;
         Console.WriteLine($"1. Помада - {priceLipstick} грн");
@@ -181,7 +359,7 @@ class Program
     }
 
 
-    private static void ShowOrderMenu()
+    static void ShowOrderMenu()
     {
         double priceLipstick = 310;
         double priceMascara = 250;
@@ -198,7 +376,7 @@ class Program
         double crayon = Shownumber("Введiть кiлькiсть олiвцiв для брiв (шт.):");
         double eyebrowGel = Shownumber("Введiть кiлькiсть гелiв для брiв (шт.):");
         double brushes = Shownumber("Введiть кiлькiсть наборiв пензлiв для макiяжу (шт.):");
-        
+
         double totalLipstick = lipstick * priceLipstick;
         double totalMascara = mascara * priceMascara;
         double totalConcealer = concealer * priceConcealer;
@@ -211,27 +389,31 @@ class Program
                             totalEyebrowGel + totalBrushes;
 
         Console.ForegroundColor = ConsoleColor.Gray;
-       
-         double discountPercentage = 5;
-         if (totalPrice >= 1000 && totalPrice < 5000)
-             discountPercentage = 15;
-         else if (totalPrice >= 5000 && totalPrice < 10000)
-             discountPercentage = 25;
-         else if (totalPrice >= 10000)
-             discountPercentage = 50;
 
-         double discountAmount = Math.Round(totalPrice * (discountPercentage / 100));
-         double price = totalPrice-discountAmount;
+        double discountPercentage = 5;
+        if (totalPrice >= 1000 && totalPrice < 5000)
+            discountPercentage = 15;
+        else if (totalPrice >= 5000 && totalPrice < 10000)
+            discountPercentage = 25;
+        else if (totalPrice >= 10000)
+            discountPercentage = 50;
 
-        System.Console.WriteLine();
+        double discountAmount = Math.Round(totalPrice * (discountPercentage / 100));
+        double price = totalPrice - discountAmount;
+
+        Console.WriteLine();
         Console.WriteLine("=== Підсумок покупки ===");
         Console.WriteLine($"Помада: {lipstick} шт., вартість за шт ({priceLipstick}), вартість: {totalLipstick} грн.");
         Console.WriteLine($"Туш: {mascara} шт., вартість за шт ({priceMascara}), вартість: {totalMascara} грн.");
-        Console.WriteLine($"Консилер: {concealer} шт., вартість за шт ({priceConcealer}), вартість: {totalConcealer} грн.");
+        Console.WriteLine(
+            $"Консилер: {concealer} шт., вартість за шт ({priceConcealer}), вартість: {totalConcealer} грн.");
         Console.WriteLine($"Пудра: {powder} шт., вартість за шт ({pricePowder}), вартість: {totalPowder} грн.");
-        Console.WriteLine($"Олiвець для брiв: {crayon} шт., вартість за шт ({priceCrayon}), вартість: {totalCrayon} грн.");
-        Console.WriteLine($"Гель для брiв: {eyebrowGel} шт., вартість за шт ({priceEyebrowGel}), вартість: {totalEyebrowGel} грн.");
-        Console.WriteLine($"Набір пензлів для макіяжу: {brushes} шт., вартість за шт ({priceBrushes}), вартість: {totalBrushes} грн.");
+        Console.WriteLine(
+            $"Олiвець для брiв: {crayon} шт., вартість за шт ({priceCrayon}), вартість: {totalCrayon} грн.");
+        Console.WriteLine(
+            $"Гель для брiв: {eyebrowGel} шт., вартість за шт ({priceEyebrowGel}), вартість: {totalEyebrowGel} грн.");
+        Console.WriteLine(
+            $"Набір пензлів для макіяжу: {brushes} шт., вартість за шт ({priceBrushes}), вартість: {totalBrushes} грн.");
         Console.ResetColor();
 
         Console.ForegroundColor = ConsoleColor.Cyan;
@@ -249,50 +431,109 @@ class Program
     }
 
 
-private static void ShowClientsMenu()
+    static void ShowClientsMenu()
     {
         Console.WriteLine("Функцiя в розробцi");
     }
 
-    private static void ShowMenuTov()
+    static void ShowMenuTov()
     {
-        Console.WriteLine("========= МЕНЮ ТОВАРІВ =========");
-        Console.WriteLine("1. Додати новий товар");
-        Console.WriteLine("2. Переглянути всi товари");
-        Console.WriteLine("3. Редагувати товар");
-        Console.WriteLine("4. Видалити товар");
-        Console.WriteLine("5. Пошук товару за назвою");
-        Console.WriteLine("6. Сортувати за цiною / кiлькiстю");
-        Console.WriteLine("7. Повернутись у головне меню");
-        Console.WriteLine("--------------------------------");
+        while (true)
+        {
+            Console.WriteLine("========= МЕНЮ ТОВАРІВ =========");
+            Console.WriteLine("1. Додати нові товари, які згодом з'являться в продажі (5 шт)");
+            Console.WriteLine("2. Звіт");
+            Console.WriteLine("3. Редагувати товар (в розробці)");
+            Console.WriteLine("4. Видалити товар (в розробці)");
+            Console.WriteLine("5. Пошук товару за назвою (в розробці)");
+            Console.WriteLine("6. Статистика доданих товарів ");
+            Console.WriteLine("7. Повернутись у адміністраторське меню");
+            Console.WriteLine("--------------------------------");
 
-        double choice = GetUserInput("Виберiть дiю:");
+            double choice = GetUserInput("Виберіть дію:");
 
-        if (choice > 0 && choice < 8 && choice != 2 && choice != 7)
-        {
-            Console.WriteLine("Фунцiя в розробцi");
-            return;
-        }
-        else if (choice == 2)
-        {
-            ShowProductMenu();  
-        }
-        else if (choice == 7)
-        {
-            // ShowMainMenu();
-        }
-        else
-        {
-            Console.WriteLine("Неправильний пункт меню");
-            return;
-        }
+            switch (choice)
+            {
+                case 1:
+                    AddProducts();
+                    Program.Return();
+                    break;
 
+                case 2:
+                    ShowAllProducts();
+                    Program.Return();
+                    break;
+                case 6:
+                    ShowStatisticsMenu();
+                    Program.Return();
+                    break;
+                case 7:
+                    ShowAdminMenu();
+                    Program.Return();
+                    break;
+
+                default:
+                    Console.WriteLine("Функція в розробці або неправильний вибір.");
+                    Program.Return();
+                    break;
+            }
+        }
     }
 
-    private static void ShowStatisticsMenu()
+
+
+    static void ShowStatisticsMenu()
     {
-        Console.WriteLine("Фунцiя в розробцi");
-        return;
+        Console.WriteLine("\n=== СТАТИСТИКА ТОВАРІВ, ЯКІ ЗГОДОМ З'ЯВЛЯТЬСЬ В ПРОДАЖІ ===");
+
+        if (products.Count == 0)
+        {
+            Console.WriteLine("Немає даних для аналізу – список товарів порожній. Ви не додали нових товарів");
+            return;
+        }
+
+        double total = 0;
+        int count = products.Count;
+        int countAbove500 = 0;
+
+        double minPrice = double.MaxValue;
+        double maxPrice = double.MinValue;
+
+        string minName = "";
+        string maxName = "";
+
+        foreach (var p in products)
+        {
+            total += p.Price;
+
+            if (p.Price > 500)
+                countAbove500++;
+
+            if (p.Price < minPrice)
+            {
+                minPrice = p.Price;
+                minName = p.Name;
+            }
+
+            if (p.Price > maxPrice)
+            {
+                maxPrice = p.Price;
+                maxName = p.Name;
+            }
+        }
+
+        double average = total / count;
+
+        Console.WriteLine($"Загальна сума всіх товарів: {total} грн");
+        Console.WriteLine($"Середня ціна товарів: {Math.Round(average, 2)} грн");
+        Console.WriteLine($"Кількість товарів: {count}");
+        Console.WriteLine($"Кількість товарів з ціною > 500 грн: {countAbove500}");
+        Console.WriteLine($"Найдешевший товар: {minName} — {minPrice} грн");
+        Console.WriteLine($"Найдорожчий товар: {maxName} — {maxPrice} грн");
+
+        Console.WriteLine("\nНатисніть будь-яку клавішу, щоб продовжити...");
+        Console.ReadKey();
     }
 }
+
     
