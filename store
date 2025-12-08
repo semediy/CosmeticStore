@@ -1,0 +1,115 @@
+  struct Product
+    {
+        public string Name;
+        public double Price;
+        public int QuantityInStock;  
+        public bool Avaliability; 
+    }
+    static string futureProductsFile = "futureTovar_.txt";
+    
+    static void SaveFutureProductsToFile()
+    {
+        using (StreamWriter writer = new StreamWriter(futureProductsFile))
+        {
+            foreach (var p in products)
+            {
+                if (p.Avaliability == false)  // зберігаємо тільки ті, яких ще нема в наявності
+                {
+                    writer.WriteLine($"{p.Name}|{p.Price}|{p.QuantityInStock}|{p.Avaliability}");
+                }
+            }
+        }
+    }
+
+    static void LoadFutureProductsFromFile()
+    {
+        products.Clear();
+
+        if (!File.Exists(futureProductsFile))
+            return;
+
+        string[] lines = File.ReadAllLines(futureProductsFile);
+
+        foreach (string line in lines)
+        {
+            string[] parts = line.Split('|');
+
+            if (parts.Length == 4)
+            {
+                Product p = new Product();
+                p.Name = parts[0];
+                p.Price = double.Parse(parts[1]);
+                p.QuantityInStock = int.Parse(parts[2]);
+                p.Avaliability = bool.Parse(parts[3]);
+
+                products.Add(p);
+            }
+        }
+    }
+
+    static List<Product> products = new List<Product>();
+
+    static bool GetBool(string prompt)
+    {
+        while (true)
+        {
+            Console.ForegroundColor = ConsoleColor.Magenta;
+            Console.Write(prompt + " ");
+            Console.ResetColor();
+
+            string input = Console.ReadLine().Trim();
+
+            if (input == "1") return true;
+            if (input == "0") return false;
+
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("Помилка: введіть 1 (так) або 0 (ні)!");
+            Console.ResetColor();
+        }
+    }
+
+    static void AddProducts()
+    {
+        Console.WriteLine("\n=== Додавання товарів ===");
+
+        for (int i = 0; i < 5; i++)
+        {
+            Product p = new Product();
+
+            Console.WriteLine($"\nВведення товару №{i + 1}");
+
+            Console.Write("Назва товару: ");
+            p.Name = Console.ReadLine();
+
+          
+           p.Price = Shownumber("Ціна товару:");
+            
+            p.QuantityInStock = Shownumber("Кількість товару на складі (шт):");
+
+            p.Avaliability = GetBool("Товар в наявності? (1 - так, 0 - ні):");
+
+            products.Add(p);
+        }
+        SaveFutureProductsToFile();
+        Console.WriteLine("\nУспішно додано 5 товарів!");
+    }
+
+
+    static void ShowAllProducts()
+    { ShowProductMenu(); 
+        Console.WriteLine("\n=== Список товарів ===");
+
+        if (products.Count == 0)
+        {
+            Console.WriteLine("Немає збережених товарів.");
+            return;
+        }
+
+        int index = 1;
+        foreach (var p in products)
+        {
+            Console.WriteLine($"{index}. {p.Name} ціна: {p.Price} грн, кількість на складі {p.QuantityInStock},чи є в наявності в магазині: {p.Avaliability} ");
+            index++;
+        }
+      
+    }
